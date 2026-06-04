@@ -234,12 +234,12 @@ main{max-width:700px;margin:0 auto;padding:24px 16px 80px;}
 
 <main>
   <div class="mode-nav">
-    <button class="mode-btn active"  onclick="setMode('all',this)">📚 Alles</button>
-    <button class="mode-btn"         onclick="setMode('fill',this)">✏️ Invullen</button>
+    <button class="mode-btn active"  onclick="setMode('fill',this)">✏️ Invullen</button>
     <button class="mode-btn"         onclick="setMode('type',this)">⌨️ Typen</button>
     <button class="mode-btn"         onclick="setMode('scramble',this)">🔀 Puzzel</button>
     <button class="mode-btn"         onclick="setMode('match',this)">🔗 Koppelen</button>
     <button class="mode-btn"         onclick="setMode('build',this)">🧩 Zinsbouw</button>
+    <button class="mode-btn"         onclick="setMode('all',this)">📚 Alles</button>
   </div>
 
   <div class="card" id="game-card">
@@ -375,7 +375,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup()
 // STATE
 // ══════════════════════════════════════════════════════════════
 const ROUND_SIZE = 7;
-let mode = 'all';
+let mode = 'fill';
 let xp = 0, streak = 0;
 let roundQueue = [], missedWords = [];
 let qIndex = 0;
@@ -386,6 +386,13 @@ let buildState = {};
 const $ = id => document.getElementById(id);
 function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b; }
 function normalize(s){ return s.trim().toLowerCase().replace(/[.'?,!–]/g,''); }
+function oneWordAnswer(item){ return (item.answer||item.nl).trim().split(/\s+/).pop(); }
+function oneWordDistractors(item){ return (item.dis||[]).map(d=>d.trim().split(/\s+/).pop()).filter(Boolean).slice(0,3); }
+function blankPrompt(item, blank='_______'){
+  const text=item.fill||'';
+  if(text.includes('___')) return text.replace(/_+/g, blank);
+  return text.replace(item.answer, blank).replace(oneWordAnswer(item), blank);
+}
 
 function buildDots(id,total,cur){
   const c=$(id); c.innerHTML='';
@@ -484,8 +491,9 @@ function showFill(item){
   $('mode-fill').style.display='block';
   $('fill-label').textContent=`Invuloefening – ${qIndex+1} van ${roundQueue.length}`;
   buildDots('fill-dots',roundQueue.length,qIndex);
+  const answer=oneWordAnswer(item);
   $('fill-topic').textContent=item.topic;
-  $('fill-sentence').textContent=item.fill.replace(item.answer,'___________');
+  $('fill-sentence').textContent=blankPrompt(item,'___________');
   $('fill-hint').textContent=`Engels: "${item.en}"`;
   $('fill-translation').style.display='none'; $('fill-translation').textContent='';
   const transBtn=$('fill-trans-btn');
@@ -496,7 +504,7 @@ function showFill(item){
     transBtn.style.display='none';
   };
 
-  const opts=shuffle([item.answer,...item.dis.slice(0,3)]);
+  const opts=shuffle([answer,...oneWordDistractors(item)]);
   const cont=$('fill-options'); cont.innerHTML='';
   opts.forEach(w=>{
     const b=document.createElement('button');
@@ -512,11 +520,12 @@ function showFill(item){
 
 function handleFill(btn,chosen,item){
   document.querySelectorAll('#fill-options .word-btn').forEach(b=>b.classList.add('locked'));
-  if(chosen===item.answer){
+  const answer=oneWordAnswer(item);
+  if(chosen===answer){
     btn.classList.add('correct'); handleCorrect(item); markDot('fill-dots',qIndex,'ok');
   } else {
     btn.classList.add('wrong');
-    document.querySelectorAll('#fill-options .word-btn').forEach(b=>{ if(b.textContent===item.answer) b.classList.add('reveal'); });
+    document.querySelectorAll('#fill-options .word-btn').forEach(b=>{ if(b.textContent===answer) b.classList.add('reveal'); });
     handleWrong(item); markDot('fill-dots',qIndex,'err');
   }
   // After answering, click sentence to open popup
@@ -535,11 +544,11 @@ function showType(item){
   // Make topic tag clickable
   makeClickable($('type-topic'), item.nl);
 
-  $('type-prompt').textContent=item.fill.replace(item.answer,'_______');
+  $('type-prompt').textContent=blankPrompt(item,'_______');
   $('type-sub').textContent=getTypeInstruction(item);
   const inp=$('type-input');
   inp.value=''; inp.className=''; inp.disabled=false;
-  inp.dataset.correct=item.answer; inp.dataset.nl=item.nl;
+  inp.dataset.correct=oneWordAnswer(item); inp.dataset.nl=item.nl;
   $('type-feedback').textContent=''; $('type-feedback').className='type-feedback';
   $('type-hint-btn').style.display='block';
   $('type-submit-btn').disabled=false;
