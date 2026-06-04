@@ -48,6 +48,12 @@ main{max-width:700px;margin:0 auto;padding:24px 16px 80px;}
 .dot.err{background:var(--red);}
 .dot.cur{background:var(--blue);transform:scale(1.3);}
 
+/* ─── VERTICAL PRACTICE ─── */
+.all-practice #mode-type,
+.all-practice #mode-scramble,
+.all-practice #mode-match,
+.all-practice #mode-build{border-top:1px solid #eee;margin-top:28px;padding-top:24px;}
+
 /* ─── FILL IN THE BLANK ─── */
 .sentence{font-size:21px;line-height:1.55;text-align:center;margin-bottom:6px;}
 .hint-box{font-size:13px;color:var(--muted);text-align:center;font-style:italic;margin-bottom:18px;}
@@ -228,7 +234,8 @@ main{max-width:700px;margin:0 auto;padding:24px 16px 80px;}
 
 <main>
   <div class="mode-nav">
-    <button class="mode-btn active"  onclick="setMode('fill',this)">✏️ Invullen</button>
+    <button class="mode-btn active"  onclick="setMode('all',this)">📚 Alles</button>
+    <button class="mode-btn"         onclick="setMode('fill',this)">✏️ Invullen</button>
     <button class="mode-btn"         onclick="setMode('type',this)">⌨️ Typen</button>
     <button class="mode-btn"         onclick="setMode('scramble',this)">🔀 Puzzel</button>
     <button class="mode-btn"         onclick="setMode('match',this)">🔗 Koppelen</button>
@@ -368,7 +375,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup()
 // STATE
 // ══════════════════════════════════════════════════════════════
 const ROUND_SIZE = 7;
-let mode = 'fill';
+let mode = 'all';
 let xp = 0, streak = 0;
 let roundQueue = [], missedWords = [];
 let qIndex = 0;
@@ -443,11 +450,21 @@ function nextQ(){
 function showQ(){
   if(qIndex>=roundQueue.length){ endRound(); return; }
   ['fill','type','scramble','match','build'].forEach(m=>$('mode-'+m).style.display='none');
+  $('game-card').classList.toggle('all-practice', mode==='all');
   const item=roundQueue[qIndex];
+  if(mode==='all')      showAll(item);
   if(mode==='fill')     showFill(item);
   if(mode==='type')     showType(item);
   if(mode==='scramble') showScramble(item);
   if(mode==='build')    showBuild(item);
+}
+
+function showAll(item){
+  showFill(item);
+  showType(item);
+  showScramble(item);
+  showBuild(item);
+  startMatch({inline:true});
 }
 
 // ── Helper: make any element open popup on click ──
@@ -661,11 +678,11 @@ function checkScramble(){
 // ══════════════════════════════════════════════════════════════
 // MODE: MATCHING
 // ══════════════════════════════════════════════════════════════
-function startMatch(){
-  ['fill','type','scramble','build'].forEach(m=>$('mode-'+m).style.display='none');
+function startMatch(options={}){
+  if(!options.inline) ['fill','type','scramble','build'].forEach(m=>$('mode-'+m).style.display='none');
   $('mode-match').style.display='block';
   $('next-btn').classList.remove('show');
-  const items=shuffle(vocab).slice(0,6);
+  const items=options.inline ? shuffle([roundQueue[qIndex], ...vocab.filter(v=>v.nl!==roundQueue[qIndex].nl)]).slice(0,6) : shuffle(vocab).slice(0,6);
   matchPairs=items; matchSelected=null; matchDone=0;
   buildDots('match-dots',items.length,0);
   const left=shuffle([...items]), right=shuffle([...items]);
@@ -709,7 +726,10 @@ function handleMatch(el){
     const dots=$('match-dots').querySelectorAll('.dot');
     if(dots[matchDone-1]) dots[matchDone-1].className='dot ok';
     if(dots[matchDone])   dots[matchDone].className='dot cur';
-    if(matchDone===matchPairs.length) setTimeout(endRound,600);
+    if(matchDone===matchPairs.length) {
+      if(mode==='all') $('next-btn').classList.add('show');
+      else setTimeout(endRound,600);
+    }
   } else {
     [first,second].forEach(e=>{ e.classList.add('flash-wrong'); setTimeout(()=>e.classList.remove('flash-wrong'),600); });
     const item=vocab.find(v=>v.nl===first.dataset.key);
