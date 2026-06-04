@@ -38,7 +38,9 @@ Main UI features:
 ├── Dockerfile                    # Runtime image: nginx:1.27-alpine
 ├── docker/nginx.conf             # Nginx config for static site
 ├── src/woordenschat_oefeningen_v1.html
-│                                  # Entire app: HTML, CSS, JS, vocabulary data
+│                                  # App shell: HTML, CSS, JS quiz logic
+├── src/vocab.json                 # External vocabulary dataset
+├── docs/VOCABULARY_SCHEMA.md      # Schema for adding vocabulary items
 ├── .dockerignore                 # Excludes git, devcontainer, opencode, md files from runtime image
 ├── .devcontainer/                # Development container config/tooling
 └── .opencode/opencode.json       # Opencode commands/skills config
@@ -67,18 +69,20 @@ Open `http://localhost:8080`.
 
 ## Application architecture
 
-The app is implemented as one standalone file:
+The app is implemented as a static HTML app plus an external JSON dataset:
 
 - `src/woordenschat_oefeningen_v1.html`
   - HTML structure for the game screens and popup.
   - Inline CSS using CSS custom properties for colors and spacing.
-  - Inline JavaScript for data, state, rendering, quiz logic, scoring, and effects.
+  - Inline JavaScript for state, rendering, quiz logic, scoring, effects, and startup data loading.
+- `src/vocab.json`
+  - Vocabulary dataset loaded with `fetch()` during startup.
 
 There are no external client-side dependencies. All state is in memory and resets on page reload.
 
 Important JavaScript concepts:
 
-- `vocab`: central array of vocabulary items and all exercise content.
+- `vocab`: central array of vocabulary items and all exercise content, loaded from `src/vocab.json`.
 - `ROUND_SIZE = 7`: default number of questions per round for most modes.
 - Global state:
   - `mode`
@@ -159,7 +163,7 @@ Topics in the current dataset:
 - Because there is no build step, changes to the app should remain browser-compatible plain HTML/CSS/JS.
 - The runtime Docker build excludes Markdown, `.git`, `.devcontainer`, and `.opencode` via `.dockerignore`.
 - If adding assets, ensure Docker copies them from `src/` or update the Dockerfile/Nginx config deliberately.
-- If adding vocabulary, preserve the existing object shape so all modes continue to work.
+- If adding vocabulary, edit `src/vocab.json` and follow `docs/VOCABULARY_SCHEMA.md` so all modes continue to work.
 - If changing scoring or flow, consider all five modes because they share `handleCorrect()`, `handleWrong()`, `missedWords`, and `endRound()`.
 
 ## Known gaps / things not present
@@ -197,3 +201,5 @@ Then visit:
 ```text
 http://localhost:8080/woordenschat_oefeningen_v1.html
 ```
+
+Use an HTTP server for local checks; opening the HTML directly with `file://` can prevent `fetch('vocab.json')` from loading the dataset.
