@@ -1,0 +1,70 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "command": {
+    "caveman": {
+      "description": "Ultra-compressed communication mode",
+      "template": "Load and use the caveman skill. $ARGUMENTS"
+    },
+    "diagnose": {
+      "description": "Disciplined diagnosis loop for hard bugs",
+      "template": "Load and use the diagnose skill. $ARGUMENTS"
+    },
+    "grill-me": {
+      "description": "Interview relentlessly about a plan or design",
+      "template": "Load and use the grill-me skill. $ARGUMENTS"
+    },
+    "grill-with-docs": {
+      "description": "Stress-test a plan against project domain language",
+      "template": "Load and use the grill-with-docs skill. $ARGUMENTS"
+    },
+    "handoff": {
+      "description": "Compact conversation into handoff document",
+      "template": "Load and use the handoff skill. $ARGUMENTS"
+    },
+    "improve-codebase-architecture": {
+      "description": "Find deepening opportunities in a codebase",
+      "template": "Load and use the improve-codebase-architecture skill. $ARGUMENTS"
+    },
+    "prototype": {
+      "description": "Build a throwaway prototype to test a design",
+      "template": "Load and use the prototype skill. $ARGUMENTS"
+    },
+    "setup-matt-pocock-skills": {
+      "description": "Setup agent skills configuration for this repo",
+      "template": "Load and use the setup-matt-pocock-skills skill. $ARGUMENTS"
+    },
+    "tdd": {
+      "description": "Test-driven development with red-green-refactor",
+      "template": "Load and use the tdd skill. $ARGUMENTS"
+    },
+    "to-issues": {
+      "description": "Break a plan into independently-grabbable issues",
+      "template": "Load and use the to-issues skill. $ARGUMENTS"
+    },
+    "to-prd": {
+      "description": "Turn conversation context into a PRD",
+      "template": "Load and use the to-prd skill. $ARGUMENTS"
+    },
+    "triage": {
+      "description": "Triage issues through a state machine",
+      "template": "Load and use the triage skill. $ARGUMENTS"
+    },
+    "write-a-skill": {
+      "description": "Create new agent skills with proper structure",
+      "template": "Load and use the write-a-skill skill. $ARGUMENTS"
+    },
+    "zoom-out": {
+      "description": "Get broader context about the codebase",
+      "template": "Load and use the zoom-out skill. $ARGUMENTS"
+    }
+  },
+  "skills": {
+    "paths": [
+      "../.agents/skills"
+    ]
+  },
+  "instructions": [
+    "../AGENTS.md",
+    "../.agents/**/*.md"
+  ]
+}
