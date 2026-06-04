@@ -4,7 +4,7 @@
 
 This repository contains a small static web app for practicing Dutch vocabulary used in inburgering-style formal texts. The current content focuses on signaalwoorden and official-letter vocabulary: obligation, permission, time limits, conditions, connectors, quantities, formal verbs, document/procedure words, and exceptions/scope.
 
-The app is served as static HTML by Nginx in Docker. There is no package manager, build step, backend, database, or test suite in the repository.
+The app is served as static HTML by Nginx in Docker. There is no app build step, backend, database, or test suite. `package.json` is only for local TypeScript dev-server tooling.
 
 ## User-facing product
 
@@ -34,9 +34,12 @@ Main UI features:
 .
 ├── AGENTS.md                     # Agent behavior guidelines
 ├── CLAUDE.md                     # Points to AGENTS.md
-├── README.md                     # Minimal Docker run instructions
+├── README.md                     # Local dev and Docker run instructions
 ├── Dockerfile                    # Runtime image: nginx:1.27-alpine
 ├── docker/nginx.conf             # Nginx config for static site
+├── package.json                  # Local TypeScript dev-server script
+├── tsconfig.json                 # TypeScript config for tools
+├── tools/dev-server.ts           # Local static dev server
 ├── src/woordenschat_oefeningen_v1.html
 │                                  # App shell: HTML, CSS, JS quiz logic
 ├── src/vocab.json                 # External vocabulary dataset
@@ -193,13 +196,20 @@ http://localhost:8080
 Quick static file check without Docker:
 
 ```bash
-python3 -m http.server 8080 --directory src
+npm install
+npm run dev
 ```
 
 Then visit:
 
 ```text
-http://localhost:8080/woordenschat_oefeningen_v1.html
+http://localhost:8090
+```
+
+Use another port:
+
+```bash
+PORT=8091 npm run dev
 ```
 
 Use an HTTP server for local checks; opening the HTML directly with `file://` can prevent `fetch('vocab.json')` from loading the dataset.
