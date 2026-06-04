@@ -519,7 +519,7 @@ function showType(item){
   makeClickable($('type-topic'), item.nl);
 
   $('type-prompt').textContent=item.fill.replace(item.answer,'_______');
-  $('type-sub').textContent='Typ het ontbrekende woord';
+  $('type-sub').textContent=getTypeInstruction(item);
   const inp=$('type-input');
   inp.value=''; inp.className=''; inp.disabled=false;
   inp.dataset.correct=item.answer; inp.dataset.nl=item.nl;
@@ -528,6 +528,13 @@ function showType(item){
   $('type-submit-btn').disabled=false;
   inp.onkeydown=e=>{ if(e.key==='Enter') checkType(); };
   setTimeout(()=>inp.focus(),50);
+}
+
+function getTypeInstruction(item){
+  const tag=(item.tag||'').toLowerCase();
+  if(tag.includes('werkwoord + voorzetsel') || tag.includes('scheidbaar werkwoord')) return 'Typ één woord uit het werkwoord / de werkwoordgroep';
+  if(tag.includes('uitdrukking') || item.nl.includes(' ')) return 'Typ één woord uit de uitdrukking';
+  return 'Typ het ontbrekende woord';
 }
 
 function showTypeHint(){
@@ -573,11 +580,11 @@ function showScramble(item){
   $('scr-topic').textContent=item.topic;
   makeClickable($('scr-topic'), item.nl);
   $('scr-english').textContent = item.fill.replace(item.answer, '___________');
-  $('scr-sub').textContent = '🇬🇧 ' + item.en + ' — sleep de letters naar de lege plek';
+  $('scr-sub').textContent = '🇬🇧 ' + item.en + ' — spel één ontbrekend woord';
   $('scr-feedback').textContent=''; $('scr-check-btn').disabled=false;
-  const word=item.answer;
-  const isPhrase=word.includes(' ');
-  const tiles=isPhrase ? shuffle(word.split(' ')) : shuffle(word.split(''));
+  const word=item.answer.trim().split(/\s+/).pop();
+  const isPhrase=false;
+  const tiles=shuffle(word.split(''));
   scrState={word,isPhrase,tiles:[...tiles],placed:[],original:[...tiles]};
   renderScramble();
 }
