@@ -40,9 +40,14 @@ Main UI features:
 ├── package.json                  # Local TypeScript dev-server script
 ├── tsconfig.json                 # TypeScript config for tools
 ├── tools/dev-server.ts           # Local static dev server
+├── tools/onboard-vocab-md.mjs    # One-off importer from src/vocab.md to src/vocab.json
+├── tools/contextualize-vocab.mjs # Adds sentence context to imported vocabulary entries
+├── tools/enforce-single-word-answers.mjs
+│                                  # Ensures fill/type answers and distractors are one word
 ├── src/woordenschat_oefeningen_v1.html
 │                                  # App shell: HTML, CSS, JS quiz logic
 ├── src/vocab.json                 # External vocabulary dataset
+├── src/vocab.md                   # Source markdown list imported into vocab.json
 ├── docs/VOCABULARY_SCHEMA.md      # Schema for adding vocabulary items
 ├── .dockerignore                 # Excludes git, devcontainer, opencode, md files from runtime image
 ├── .devcontainer/                # Development container config/tooling
@@ -117,6 +122,11 @@ Each `vocab` entry is a plain object. Most entries use this shape:
 {
   nl: "verplicht",
   en: "obligatory / required",
+  weight: 5,
+  source: {
+    name: "Next 200 Dutch Reading Exam Vocabulary Words",
+    numbers: [134]
+  },
   topic: "⚠️ Verplichting",
   tag: "bijvoeglijk naamwoord",
   fill: "U bent ___ een zorgverzekering te hebben.",
@@ -141,9 +151,13 @@ Each `vocab` entry is a plain object. Most entries use this shape:
 Notes:
 
 - `nl` is also used as the lookup key for popups and matching.
+- `weight` is optional importance metadata from source lists: `1` low through `5` highest.
+- `source.numbers` preserves original list number(s); it is an array because duplicate phrases can appear more than once in a source list.
 - `answer` may differ in capitalization from the displayed `nl`/sentence position for sentence-initial words.
-- `dis` contains distractors for fill-in-the-blank mode.
+- `answer` must be exactly one word, even when `nl` is a multi-word phrase.
+- `dis` contains one-word distractors for fill-in-the-blank mode.
 - `sentence.words` is the canonical sequence for sentence-build mode.
+- `fill` and `sentence.nl` should be contextual sentences; vocabulary should not be presented as isolated words.
 - `info.parts[].cls` maps to popup CSS classes such as `part-prefix`, `part-base`, `part-suffix`, `part-prep`, `part-particle`, and `part-word`.
 
 ## Domain vocabulary currently covered

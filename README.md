@@ -2,7 +2,7 @@
 
 Static site served by Nginx in Docker.
 
-Vocabulary data lives in `src/vocab.json`. See `docs/VOCABULARY_SCHEMA.md` before adding new words or phrases.
+Vocabulary data lives in `src/vocab.json`. The imported source list is kept in `src/vocab.md`; onboarded entries preserve their source number and importance weight. See `docs/VOCABULARY_SCHEMA.md` before adding new words or phrases.
 
 ## Run locally
 
