@@ -21,6 +21,8 @@ header{background:var(--blue);color:#fff;padding:14px 24px;display:flex;align-it
 header h1{font-size:18px;font-weight:700;}
 header p{font-size:12px;opacity:.8;margin-top:2px;}
 .hud{display:flex;gap:10px;align-items:center;}
+.lang-control{background:rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:3px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;}
+.lang-control select{border:none;border-radius:6px;padding:4px 6px;font-weight:700;color:var(--blue);background:#fff;}
 .hud-item{background:rgba(255,255,255,.15);border-radius:8px;padding:6px 14px;text-align:center;min-width:64px;}
 .hud-item .val{font-size:22px;font-weight:800;line-height:1;}
 .hud-item .lbl{font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;}
@@ -220,6 +222,12 @@ main{max-width:700px;margin:0 auto;padding:24px 16px 80px;}
     <p>Inburgering signaalwoorden · Klik elk Nederlands woord voor uitleg</p>
   </div>
   <div class="hud">
+    <label class="lang-control">Hulp taal
+      <select id="support-lang" onchange="setSupportLang(this.value)">
+        <option value="en">English</option>
+        <option value="pt" selected>Português</option>
+      </select>
+    </label>
     <div class="hud-item">
       <div class="val" id="hud-xp">0</div>
       <div class="lbl">XP</div>
@@ -348,7 +356,8 @@ function openPopup(nl) {
   const {info, tag} = item;
   document.getElementById('pu-word').textContent = item.nl;
   document.getElementById('pu-tag').textContent = tag || '';
-  document.getElementById('pu-translation').textContent = '🇬🇧 ' + (info.translation || item.en);
+  document.getElementById('pu-translation').textContent = ui('flag') + ' ' + supportInfoTranslation(item);
+  document.querySelector('.popup-parts-label').textContent = ui('wordParts');
   const partsEl = document.getElementById('pu-parts');
   partsEl.innerHTML = '';
   (info.parts || []).forEach(p => {
@@ -357,7 +366,7 @@ function openPopup(nl) {
     el.innerHTML = `<span class="piece">${p.piece}</span><span class="role">${p.role}</span><span class="meaning">${p.meaning}</span>`;
     partsEl.appendChild(el);
   });
-  document.getElementById('pu-tip').innerHTML = info.tip || '';
+  document.getElementById('pu-tip').innerHTML = supportTip(item);
   document.getElementById('popup-overlay').classList.add('show');
 }
 
@@ -382,10 +391,37 @@ let qIndex = 0;
 let matchSelected = null, matchDone = 0, matchPairs = [];
 let scrState = {};
 let buildState = {};
+let supportLang = 'pt';
+
+const PT_MEANINGS = {
+  'verplicht':'obrigatório / exigido', 'mag niet':'não é permitido / não deve', 'hoeft niet':'não precisa', 'dient te':'deve / é obrigatório (formal)', 'recht hebben op':'ter direito a', 'in aanmerking komen':'qualificar-se / ser elegível',
+  'uiterlijk':'o mais tardar / até no máximo', 'vanaf':'a partir de', 'tot en met':'até e incluindo', 'binnen':'dentro de (um período)', 'na ontvangst':'após o recebimento', 'zo spoedig mogelijk':'o mais rápido possível',
+  'mits':'desde que', 'tenzij':'a menos que', 'op voorwaarde dat':'com a condição de que', 'indien':'se / caso (formal)', 'afhankelijk van':'dependendo de',
+  'echter':'porém / no entanto', 'bovendien':'além disso', 'desondanks':'apesar disso', 'daarentegen':'por outro lado / em contraste', 'immers':'afinal / como se sabe',
+  'maximaal':'no máximo', 'minimaal':'no mínimo', 'ten hoogste':'no máximo (formal)', 'ten minste':'pelo menos (formal)',
+  'beschikken over':'ter / possuir (formal)', 'aanvragen':'solicitar / requerer', 'indienen':'entregar / apresentar', 'voldoen aan':'cumprir / atender a', 'gebruik maken van':'fazer uso de', 'de beschikking':'decisão oficial', 'bezwaar maken':'apresentar objeção / recorrer', 'de termijn':'prazo', 'betreffende':'referente a / relativo a', 'hierbij':'por meio desta / em anexo', 'conform':'de acordo com',
+  'behalve':'exceto', 'niet van toepassing':'não aplicável', 'uitgezonderd':'com exceção de', 'ongeacht':'independentemente de',
+  'werken':'trabalhar', 'werk':'trabalho', 'rooster':'escala / horário', 'werkrooster':'escala de trabalho', 'hotel':'hotel', 'collega':'colega', 'baas':'chefe', 'e-mail':'e-mail', 'brief':'carta', 'bericht':'mensagem', 'afspraak':'acordo / compromisso', 'afspraken maken':'fazer acordos / marcar compromissos', 'zich aan afspraken houden':'cumprir acordos', 'hieronder':'abaixo', 'vanaf nu':'a partir de agora', 'elke':'cada / todo', 'eerste':'primeiro', 'tweede':'segundo', 'derde':'terceiro', 'maand':'mês', 'zondag':'domingo', 'zaterdag':'sábado', 'avond':'noite', 'middag':'tarde', 'ochtend':'manhã', 'nacht':'noite / madrugada', 'vrij':'livre / de folga', 'vrij zijn':'estar livre / de folga', 'vrij krijgen':'conseguir folga', 'ruilen met':'trocar com', 'zelf regelen':'organizar você mesmo', 'wie kan':'quem pode', 'niemand':'ninguém', 'twee diensten achter elkaar':'dois turnos seguidos', 'nachtdienst hebben':'ter turno da noite', 'nachtdienst gehad hebben':'ter tido turno da noite', 'draaien':'trabalhar / fazer um turno', 'dienst draaien':'fazer um turno', 'ochtenddienst':'turno da manhã', 'middagdienst':'turno da tarde', 'avonddienst':'turno da noite', 'nachtdienst':'turno noturno', 'vanmorgen':'esta manhã', 'praten':'conversar', 'met zijn allen':'todos juntos', 'duidelijk':'claro', 'duidelijk maken':'deixar claro',
+  'winkel':'loja', 'bloemenwinkel':'floricultura', 'open zijn':'estar aberto', 'dicht zijn':'estar fechado', 'helpen':'ajudar', 'iemand helpen':'ajudar alguém', 'altijd helpen':'sempre ajudar', 'klant':'cliente', 'klanten':'clientes', 'klantenkaart':'cartão de cliente', 'oude klantenkaart':'cartão de cliente antigo', 'nieuwe klantenkaart':'cartão de cliente novo', 'gebruiken':'usar', 'niet meer gebruiken':'não usar mais', 'kosten':'custar', 'kostte':'custava / custou', 'gratis':'grátis', 'sparen':'economizar / juntar', 'punt':'ponto', 'punten':'pontos', 'één punt krijgen':'ganhar um ponto', 'tien punten':'dez pontos', 'korting':'desconto', 'korting krijgen':'ganhar desconto', 'per':'por / cada', 'per week':'por semana', 'per maand':'por mês', 'twee keer per week':'duas vezes por semana', 'derde keer':'terceira vez', 'dweilen':'passar pano', 'schoonhouden':'manter limpo', 'schoon':'limpo', 'vies':'sujo', 'erg vaak':'muito frequentemente', 'druk geweest':'esteve movimentado', 'als':'se / quando', 'dan':'então', 'nog':'ainda / mais um', 'nog een derde keer':'mais uma terceira vez', 'vragen hebben':'ter perguntas', 'laat het me weten':'me avise', 'groeten':'cumprimentos / saudações',
+  'centrum':'centro', 'sportcentrum':'centro esportivo', 'sporten':'praticar esporte', 'zoveel als u maar wilt':'tanto quanto quiser', 'abonnement hebben':'ter assinatura', 'aanmelden bij':'inscrever-se em', 'werkdagen':'dias úteis', 'weekenddagen':'dias de fim de semana', 'zaterdag en zondag':'sábado e domingo', 'vrijdagmiddag':'sexta à tarde', 'vrijdagavond':'sexta à noite', 'zaterdagavond':'sábado à noite', 'zondagavond':'domingo à noite', 'tot hoe laat':'até que horas', 'hoe laat':'que horas', 'wanneer':'quando', 'hoe vaak':'com que frequência', 'hoeveel':'quanto / quantos', 'wie':'quem', 'met wie':'com quem', 'waarom':'por quê', 'waar':'onde', 'wat moet hij doen':'o que ele deve fazer', 'wat moet zij doen':'o que ela deve fazer',
+  'kunnen':'poder / ser capaz', 'moeten':'dever / ter que', 'mogen':'poder / ter permissão', 'willen':'querer', 'willen komen':'querer vir', 'willen solliciteren':'querer candidatar-se', 'moeten bellen':'deve ligar', 'kunnen bellen':'pode ligar', 'bellen op':'ligar para / no número', 'telefonisch':'por telefone', 'telefonisch advies':'orientação por telefone', 'telefoonnummer':'número de telefone', 'alarmnummer':'número de emergência', 'huisarts':'médico de família / clínico geral', 'huisartsenpost':'posto médico fora do horário', 'centrale huisartsenpost':'serviço central de médico de família fora do horário', 'eigen huisarts':'seu próprio médico de família', 'vervangen':'substituir', 'wie vervangt':'quem substitui', 'tijdens vakanties':'durante as férias', 'vakantie hebben':'estar de férias', 'nodig hebben':'precisar', 'afspraak voor het spreekuur':'consulta no horário de atendimento', 'spreekuur':'horário de consulta', 'telefonisch spreekuur':'horário de consulta por telefone', 'kort overleg':'consulta breve', 'uitslagen':'resultados', 'bloed prikken':'exame de sangue / tirar sangue', 'balie':'balcão / recepção', 'aan de balie':'no balcão / na recepção', 'het liefst':'de preferência', 'beste tijd':'melhor horário', 'avonden':'noites', 'in het weekend':'no fim de semana', 'noodgeval':'emergência', 'noodgevallen':'emergências', 'niemand direct kunnen bereiken':'não conseguir falar diretamente com ninguém', 'direct bereiken':'alcançar diretamente', 'website':'site', 'opzoeken':'procurar / consultar',
+  'weekblad':'jornal semanal', 'adres':'endereço', 'informatie':'informação', 'informatief':'informativo', 'gezellig':'agradável / acolhedor', 'bijeenkomst':'reunião / encontro', 'buurtbijeenkomst':'reunião do bairro', 'buurtcomité':'comitê do bairro', 'buurt':'bairro', 'bewoners':'moradores', 'uitnodigen':'convidar', 'uitnodiging':'convite', 'van harte uitnodigen':'convidar cordialmente', 'komen':'vir', 'laten weten':'avisar / informar', 'vóór 23 november':'antes de 23 de novembro', 'uiterlijk 22 november':'até 22 de novembro no máximo', 'avond zelf':'a própria noite', 'zich opgeven':'inscrever-se', 'plannen bespreken':'discutir planos', 'volgend jaar':'próximo ano', 'veranderingen':'mudanças', 'speeltuin':'parquinho', 'kinderen':'crianças', 'bomen planten':'plantar árvores', 'programma':'programa', 'ontvangst':'recepção / boas-vindas', 'welkomstdrankje':'bebida de boas-vindas', 'optreden':'apresentação', 'film':'filme', 'themagroep':'grupo temático', 'meepraten':'participar da conversa', 'activiteiten':'atividades', 'winkels':'lojas', 'werkgelegenheid':'emprego / oportunidades de trabalho', 'veiligheid':'segurança', 'groen en schoon':'verde e limpo', 'taalcursus':'curso de idioma', 'Nederlandse taal':'língua neerlandesa / holandês', 'echt gebruiken':'usar de verdade', 'durven':'ousar / ter coragem', 'durven praten':'ter coragem de falar', 'durven schrijven':'ter coragem de escrever', 'fouten maken':'cometer erros'
+};
+const UI = {
+  en: {flag:'🇬🇧', english:'English', showTranslation:'🇬🇧 Show translation', englishPrefix:'English', spellMissing:'spell one missing word', typeVerb:'Type one word from the verb / verb group', typeExpression:'Type one word from the expression', typeMissing:'Type the missing word', hint:'Show hint', hintLead:'Hint', explanation:'Explanation', wordParts:'Word parts', genericTip:'Learning tip', correct:'Correct', allSlots:'Fill all boxes!', incompleteSentence:'Sentence is not complete!'},
+  pt: {flag:'🇧🇷', english:'Português', showTranslation:'🇧🇷 Mostrar significado', englishPrefix:'Português', spellMissing:'forme uma palavra em falta', typeVerb:'Digite uma palavra do verbo / grupo verbal', typeExpression:'Digite uma palavra da expressão', typeMissing:'Digite a palavra que falta', hint:'Mostrar dica', hintLead:'Dica', explanation:'Explicação', wordParts:'Construção da palavra', genericTip:'Dica de estudo', correct:'Correto', allSlots:'Preencha todas as casas!', incompleteSentence:'A frase ainda não está completa!'}
+};
 
 const $ = id => document.getElementById(id);
 function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b; }
 function normalize(s){ return s.trim().toLowerCase().replace(/[.'?,!–]/g,''); }
+function ui(key){ return (UI[supportLang] && UI[supportLang][key]) || UI.en[key] || key; }
+function supportMeaning(item){ return supportLang === 'pt' ? (item.pt || PT_MEANINGS[item.nl] || item.en) : item.en; }
+function supportSentence(item){ return supportLang === 'pt' ? (item.sentence && item.sentence.pt) || supportMeaning(item) : ((item.sentence && item.sentence.en) || item.en); }
+function supportFill(item){ return supportLang === 'pt' ? (item.fill_pt || supportMeaning(item)) : (item.fill_en || item.en); }
+function supportInfoTranslation(item){ return supportLang === 'pt' ? ((item.info && item.info.translation_pt) || supportMeaning(item)) : ((item.info && item.info.translation) || item.en); }
+function supportTip(item){ return supportLang === 'pt' ? (item.info && item.info.tip_pt) || `<strong>${ui('genericTip')}:</strong> associe <strong>${item.nl}</strong> a <em>${supportMeaning(item)}</em> em frases formais.` : ((item.info && item.info.tip) || ''); }
+function setSupportLang(lang){ supportLang = lang === 'pt' ? 'pt' : 'en'; if ($('support-lang')) $('support-lang').value = supportLang; if (vocab.length) { if (mode === 'match') startMatch(); else showQ(); } }
 function oneWordAnswer(item){ return (item.answer||item.nl).trim().split(/\s+/).pop(); }
 function oneWordDistractors(item){ return (item.dis||[]).map(d=>d.trim().split(/\s+/).pop()).filter(Boolean).slice(0,3); }
 function blankPrompt(item, blank='_______'){
@@ -494,12 +530,13 @@ function showFill(item){
   const answer=oneWordAnswer(item);
   $('fill-topic').textContent=item.topic;
   $('fill-sentence').textContent=blankPrompt(item,'___________');
-  $('fill-hint').textContent=`Engels: "${item.en}"`;
+  $('fill-hint').textContent=`${ui('englishPrefix')}: "${supportMeaning(item)}"`;
   $('fill-translation').style.display='none'; $('fill-translation').textContent='';
   const transBtn=$('fill-trans-btn');
+  transBtn.textContent=ui('showTranslation');
   transBtn.style.display='inline-block'; transBtn.disabled=false;
   transBtn.onclick=()=>{
-    $('fill-translation').textContent=item.fill_en||'';
+    $('fill-translation').textContent=supportFill(item);
     $('fill-translation').style.display='block';
     transBtn.style.display='none';
   };
@@ -550,6 +587,7 @@ function showType(item){
   inp.value=''; inp.className=''; inp.disabled=false;
   inp.dataset.correct=oneWordAnswer(item); inp.dataset.nl=item.nl;
   $('type-feedback').textContent=''; $('type-feedback').className='type-feedback';
+  $('type-hint-btn').textContent='💡 ' + ui('hint');
   $('type-hint-btn').style.display='block';
   $('type-submit-btn').disabled=false;
   inp.onkeydown=e=>{ if(e.key==='Enter') checkType(); };
@@ -558,16 +596,16 @@ function showType(item){
 
 function getTypeInstruction(item){
   const tag=(item.tag||'').toLowerCase();
-  if(tag.includes('werkwoord + voorzetsel') || tag.includes('scheidbaar werkwoord')) return 'Typ één woord uit het werkwoord / de werkwoordgroep';
-  if(tag.includes('uitdrukking') || item.nl.includes(' ')) return 'Typ één woord uit de uitdrukking';
-  return 'Typ het ontbrekende woord';
+  if(tag.includes('werkwoord + voorzetsel') || tag.includes('scheidbaar werkwoord')) return ui('typeVerb');
+  if(tag.includes('uitdrukking') || item.nl.includes(' ')) return ui('typeExpression');
+  return ui('typeMissing');
 }
 
 function showTypeHint(){
   const correct=$('type-input').dataset.correct;
   const nl=$('type-input').dataset.nl;
   const item=vocab.find(v=>v.nl===nl);
-  const desc=item&&item.info?item.info.translation:'';
+  const desc=item?supportInfoTranslation(item):'';
   const partial=correct.slice(0,Math.ceil(correct.length/2))+'…';
   $('type-feedback').innerHTML=`💡 <strong>${partial}</strong>${desc?' &nbsp;·&nbsp; '+desc:''}`;
   $('type-feedback').className='type-feedback';
@@ -606,7 +644,7 @@ function showScramble(item){
   $('scr-topic').textContent=item.topic;
   makeClickable($('scr-topic'), item.nl);
   $('scr-english').textContent = item.fill.replace(item.answer, '___________');
-  $('scr-sub').textContent = '🇬🇧 ' + item.en + ' — spel één ontbrekend woord';
+  $('scr-sub').textContent = ui('flag') + ' ' + supportMeaning(item) + ' — ' + ui('spellMissing');
   $('scr-feedback').textContent=''; $('scr-check-btn').disabled=false;
   const word=item.answer.trim().split(/\s+/).pop();
   const isPhrase=false;
@@ -663,7 +701,7 @@ function clearScramble(){
 
 function checkScramble(){
   const {placed,word,isPhrase}=scrState;
-  if(placed.filter(v=>v!==undefined).length<scrState.original.length){ $('scr-feedback').textContent='Vul alle vakjes in!'; return; }
+  if(placed.filter(v=>v!==undefined).length<scrState.original.length){ $('scr-feedback').textContent=ui('allSlots'); return; }
   const attempt=placed.join(isPhrase?' ':'');
   $('scr-check-btn').disabled=true;
   const slots=$('scr-answer').querySelectorAll('.answer-slot');
@@ -707,7 +745,7 @@ function startMatch(options={}){
   });
   right.forEach(item=>{
     const el=document.createElement('div');
-    el.className='match-item'; el.textContent=item.en;
+    el.className='match-item'; el.textContent=supportMeaning(item);
     el.dataset.key=item.nl; el.dataset.side='R';
     el.onclick=()=>handleMatch(el);
     $('match-right').appendChild(el);
@@ -753,7 +791,7 @@ function showBuild(item){
   $('mode-build').style.display='block';
   $('build-label').textContent=`Zinsbouw – ${qIndex+1} van ${roundQueue.length}`;
   buildDots('build-dots',roundQueue.length,qIndex);
-  $('build-english').textContent='"'+item.sentence.en+'"';
+  $('build-english').textContent='"'+supportSentence(item)+'"';
   makeClickable($('build-english'), item.nl);
   $('build-result').textContent=''; $('build-result').className='sb-result';
   buildState={words:item.sentence.words, placed:[], shuffled:shuffle([...item.sentence.words])};
@@ -789,7 +827,7 @@ function removeBuildWord(i){
 function clearBuild(){ buildState.placed=[]; buildState.shuffled=shuffle([...buildState.words]); $('build-result').textContent=''; renderBuild(); }
 function checkBuild(){
   const {placed,words}=buildState;
-  if(placed.length<words.length){ $('build-result').textContent='Zin is nog niet compleet!'; return; }
+  if(placed.length<words.length){ $('build-result').textContent=ui('incompleteSentence'); return; }
   const item=roundQueue[qIndex];
   const attempt=placed.join(' '), correct=words.join(' ');
   $('build-zone').querySelectorAll('.word-chip').forEach(c=>c.classList.add('locked'));
@@ -864,7 +902,7 @@ function endRound(){
   const ml=$('missed-list');
   if(wrong>0){
     ml.style.display='block';
-    $('missed-items').innerHTML=missedWords.map(w=>`<li><button style="background:none;border:none;cursor:pointer;color:var(--blue);text-decoration:underline;font-size:14px;" onclick="openPopup('${w.nl}')"><strong>${w.nl}</strong></button> = ${w.en}</li>`).join('');
+    $('missed-items').innerHTML=missedWords.map(w=>`<li><button style="background:none;border:none;cursor:pointer;color:var(--blue);text-decoration:underline;font-size:14px;" onclick="openPopup('${w.nl}')"><strong>${w.nl}</strong></button> = ${supportMeaning(w)}</li>`).join('');
   } else { ml.style.display='none'; }
 }
 

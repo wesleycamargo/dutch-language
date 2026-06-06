@@ -8,6 +8,7 @@ Vocabulary lives in `src/vocab.json` as a JSON array. Add one object per Dutch w
 {
   "nl": "verplicht",
   "en": "obligatory / required",
+  "pt": "obrigatório / exigido",
   "weight": 5,
   "source": {
     "name": "Next 200 Dutch Reading Exam Vocabulary Words",
@@ -18,14 +19,17 @@ Vocabulary lives in `src/vocab.json` as a JSON array. Add one object per Dutch w
   "fill": "U bent ___ een zorgverzekering te hebben.",
   "answer": "verplicht",
   "fill_en": "You are required to have health insurance.",
+  "fill_pt": "Você é obrigado a ter seguro de saúde.",
   "dis": ["bevoegd", "vrij", "gemachtigd"],
   "sentence": {
     "nl": "U bent verplicht dit formulier in te vullen.",
     "en": "You are required to fill in this form.",
+    "pt": "Você é obrigado a preencher este formulário.",
     "words": ["U", "bent", "verplicht", "dit", "formulier", "in", "te", "vullen."]
   },
   "info": {
     "translation": "obligatory, required — you have no choice",
+    "translation_pt": "obrigatório, exigido — você não tem escolha",
     "parts": [
       {
         "piece": "ver-",
@@ -34,7 +38,8 @@ Vocabulary lives in `src/vocab.json` as a JSON array. Add one object per Dutch w
         "meaning": "intensifier, makes the meaning stronger"
       }
     ],
-    "tip": "🔑 Verplicht means mandatory. The opposite is vrijwillig."
+    "tip": "🔑 Verplicht means mandatory. The opposite is vrijwillig.",
+    "tip_pt": "🔑 Verplicht significa obrigatório. O oposto é vrijwillig."
   }
 }
 ```
@@ -45,6 +50,7 @@ Vocabulary lives in `src/vocab.json` as a JSON array. Add one object per Dutch w
 | --- | --- | --- | --- |
 | `nl` | Yes | All modes, popup lookup | Dutch word or phrase being taught. Keep it unique. |
 | `en` | Yes | Hints, matching, scramble | Short English translation. |
+| `pt` | Optional | Portuguese support-language mode | Short Portuguese translation. If omitted, the app uses its built-in Portuguese glossary when possible, otherwise falls back to `en`. |
 | `weight` | Optional | Ordering/prioritization metadata | Importance from 1 to 5, where 5 is most important. |
 | `source.name` | Optional | Source tracking | Original list name, e.g. `Next 200 Dutch Reading Exam Vocabulary Words`. |
 | `source.numbers` | Optional | Source tracking | Original item number(s) from the source list. Use an array because duplicate phrases may appear more than once in the source. |
@@ -53,13 +59,17 @@ Vocabulary lives in `src/vocab.json` as a JSON array. Add one object per Dutch w
 | `fill` | Yes | Fill/type/scramble | Contextual Dutch sentence containing `___` where the answer belongs. Do not use isolated prompts. |
 | `answer` | Yes | Fill/type/scramble | Exact one-word answer learners must choose/type/build in the blank. Do not use multi-word answers here. |
 | `fill_en` | Yes | Fill translation button | English translation of the fill sentence. |
+| `fill_pt` | Optional | Fill translation button in Portuguese mode | Portuguese translation of the fill sentence. If omitted, the app shows the Portuguese word/phrase meaning. |
 | `dis` | Yes | Fill mode | One-word distractor answers. Provide at least 3. |
 | `sentence.nl` | Yes | Reference content | Full Dutch example sentence. |
 | `sentence.en` | Yes | Sentence-build prompt | English translation of the example sentence. |
+| `sentence.pt` | Optional | Sentence-build prompt in Portuguese mode | Portuguese translation of the example sentence. If omitted, the app shows the Portuguese word/phrase meaning. |
 | `sentence.words` | Yes | Sentence-build mode | Correct Dutch sentence split into clickable tokens, in order. |
 | `info.translation` | Yes | Popup/type hint | Longer English explanation. |
+| `info.translation_pt` | Optional | Popup/type hint in Portuguese mode | Longer Portuguese explanation. If omitted, the app uses `pt` or the built-in Portuguese glossary. |
 | `info.parts` | Yes | Popup | Word-part breakdown. Can be an empty array if not useful. |
 | `info.tip` | Yes | Popup | Learning tip; may contain simple HTML such as `<strong>`. |
+| `info.tip_pt` | Optional | Popup in Portuguese mode | Portuguese learning tip; may contain simple HTML. If omitted, the app generates a short Portuguese fallback tip. |
 
 ## `info.parts` fields
 
